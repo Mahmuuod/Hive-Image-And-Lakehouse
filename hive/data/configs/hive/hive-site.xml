@@ -1,0 +1,159 @@
+  <configuration>
+  <property>
+    <name>hive.metastore.local</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionURL</name>
+    <value>jdbc:postgresql://postgres:5432/metastore</value>
+  </property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionDriverName</name>
+    <value>org.postgresql.Driver</value>
+  </property>
+
+<property>
+  <name>hive.security.authorization.enabled</name>
+  <value>false</value>
+</property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionUserName</name>
+    <value>hive</value>
+  </property>
+
+  <property>
+    <name>javax.jdo.option.ConnectionPassword</name>
+    <value>hive</value>
+  </property>
+
+  <property>
+    <name>datanucleus.autoCreateSchema</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>datanucleus.fixedDatastore</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>datanucleus.schema.autoCreateAll</name>
+    <value>true</value>
+  </property>
+
+
+  <property>
+    <name>hive.metastore.uris</name>
+    <value>thrift://meta-store:9083,thrift://meta-store2:9084</value>
+  </property>
+
+  <property>
+    <name>hive.server2.thrift.port</name>
+    <value>10000</value>
+  </property>
+
+
+
+  <property>
+    <name>hive.metastore.warehouse.dir</name>
+    <value>/user/hive/warehouse</value>
+  </property>
+
+  <property>
+    <name>hive.server2.enable.doAs</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>hive.server2.thrift.bind.host</name>
+    <value>0.0.0.0</value>
+  </property>
+
+
+  <!-- tez -->
+  <property>
+    <name>hive.execution.engine</name>
+    <value>tez</value>
+  </property>
+
+  <property>
+    <name>tez.lib.uris</name>
+    <value>hdfs:///app/tez.tar.gz</value> <!-- Or local: file:///path/to/tez -->
+  </property>
+
+<property>
+  <name>hive.tez.container.size</name>
+  <value>2048</value>
+</property>
+
+  <property>
+    <name>hive.prewarm.enabled</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.tez.java.opts</name>
+    <value>-Xmx1536m</value>
+  </property>
+
+  <property>
+    <name>hive.server2.tez.sessions.per.default.queue</name>
+    <value>1</value>
+  </property>
+
+<property>
+  <name>hive.server2.tez.initialize.default.sessions</name>
+  <value>true</value>
+</property>
+
+<property>
+  <name>hive.server2.tez.session.lifetime</name>
+  <value>3600000</value>
+</property>
+
+  <!-- Disable closing Tez sessions aggressively -->
+  <property>
+    <name>hive.server2.tez.session.silent.close</name>
+    <value>false</value>
+  </property>
+
+  <!-- acid -->
+
+  <property>
+    <name>hive.support.concurrency</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.enforce.bucketing</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.exec.dynamic.partition.mode</name>
+    <value>nonstrict</value>
+  </property>
+
+  <property>
+    <name>hive.exec.dynamic.partition</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.enforce.sorting</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>hive.txn.manager</name>
+    <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+  </property>
+
+
+
+
+
+  </configuration>

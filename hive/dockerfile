@@ -1,0 +1,39 @@
+FROM hadoop-image:01
+USER root
+ENV TZ=Etc/UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        tzdata \
+        postgresql-client \
+        wget pip python3 python3-pip && pip install pandas google-cloud-storage google-auth pyarrow hdfs psycopg2-binary\
+    # Your Tez and Hive installations here
+    wget https://downloads.apache.org/tez/0.10.4/apache-tez-0.10.4-bin.tar.gz && \
+    tar -xzf apache-tez-0.10.4-bin.tar.gz -C /opt/ && \
+    rm apache-tez-0.10.4-bin.tar.gz && \
+    wget https://downloads.apache.org/hive/hive-4.0.1/apache-hive-4.0.1-bin.tar.gz && \
+    tar -xzf apache-hive-4.0.1-bin.tar.gz -C /opt/ && \
+    rm apache-hive-4.0.1-bin.tar.gz && \
+    # Cleanup
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy Hive configs and JDBC driver
+COPY --chown=hadoop:hadoop --chmod=755 ./data/configs/hive/hive-site.xml /opt/apache-hive-4.0.1-bin/conf/hive-site.xml
+COPY --chown=hadoop:hadoop --chmod=755 ./data/configs/hive/postgresql-42.7.3.jar /opt/apache-hive-4.0.1-bin/lib/postgresql-42.7.3.jar
+
+# Copy script
+COPY --chown=hadoop:hadoop --chmod=755 ./code/hive_script.sh /home/hadoop/code/
+
+# Set ENV variables
+ENV TEZ_HOME=/opt/apache-tez-0.10.4-bin \
+    HADOOP_CLASSPATH=/opt/apache-tez-0.10.4-bin/*:/opt/apache-tez-0.10.4-bin/lib/* \
+    HIVE_HOME=/opt/apache-hive-4.0.1-bin \
+    PATH=$PATH:/opt/apache-hive-4.0.1-bin/bin \
+    HIVE_SERVER2_THRIFT_PORT=10000
+
+# Set proper permissions
+RUN chown -R hadoop:hadoop /opt/apache-hive-4.0.1-bin /opt/apache-tez-0.10.4-bin
+USER hadoop
+ENTRYPOINT ["/bin/bash", "-c", "/home/hadoop/code/hive_script.sh"]

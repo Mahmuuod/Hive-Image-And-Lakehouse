@@ -1,0 +1,1 @@
+python3 /data/db_to_hdfs.py
