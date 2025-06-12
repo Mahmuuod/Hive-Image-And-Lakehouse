@@ -42,120 +42,6 @@ This project sets up **Apache Hive** running on the **Tez execution engine** usi
 - GCP project and access to BigQuery dataset
 - Python 3.8+ (optional: for schema converter)
 
----
-
-## 📁 Project Structure
-
-```
-.
-├── docker-compose.yml          # Hive, Tez, PostgreSQL containers
-├── hive-site.xml               # Hive configuration
-├── init-metastore.sql          # Schema setup for PostgreSQL metastore
-├── bigquery_export/
-│   ├── export_script.sh        # Exports BigQuery tables to GCS
-│   ├── download_from_gcs.py    # Downloads GCS files locally
-│   └── bq_to_hive_schema.py    # Converts BigQuery schema to Hive
-├── hive/
-│   ├── create_tables.hql       # HQL scripts to create Hive tables
-│   └── load_data.hql           # Load statements
-└── README.md                   # You are here
-```
-
----
-
-## ⚙️ Setup & Installation
-
-### 1. Clone the Repo
-
-```bash
-git clone https://github.com/your-org/hive-tez-bq-migration.git
-cd hive-tez-bq-migration
-```
-
-### 2. Start Hive-on-Tez with PostgreSQL
-
-```bash
-docker-compose up -d
-```
-
-This launches:
-
-- HiveServer2
-- Tez application master
-- PostgreSQL Metastore
-
-Wait until containers are healthy.
-
----
-
-## ☁️ BigQuery Export & Migration
-
-### Step 1: Export BigQuery Table to GCS
-
-```bash
-cd bigquery_export
-bash export_script.sh your_dataset your_table gs://your-bucket/export/
-```
-
-### Step 2: Download from GCS
-
-```bash
-python3 download_from_gcs.py --bucket your-bucket --prefix export/
-```
-
-### Step 3: Convert BigQuery Schema to Hive
-
-```bash
-python3 bq_to_hive_schema.py --bq_table_schema schema.json > hive/create_tables.hql
-```
-
----
-
-## 🐝 Load Data into Hive
-
-### 1. Create Hive Tables
-
-```bash
-docker exec -it hive-server bash
-beeline -u jdbc:hive2://localhost:10000 -n hive -p hive -f /scripts/create_tables.hql
-```
-
-### 2. Load Data
-
-Update `load_data.hql` to point to the downloaded file paths, then:
-
-```bash
-beeline -u jdbc:hive2://localhost:10000 -n hive -p hive -f /scripts/load_data.hql
-```
-
----
-
-## 🧪 Testing
-
-Verify data is available in Hive:
-
-```sql
-SELECT COUNT(*) FROM your_table;
-```
-
----
-
-## 🛠️ Troubleshooting
-
-- Ensure HiveServer2 has access to the location of data files
-- Check logs using: `docker logs hive-server`
-- If Tez is not executing, validate Tez libraries are in the classpath
-
----
-
-## 📚 References
-
-- [Apache Hive Documentation](https://cwiki.apache.org/confluence/display/Hive/Home)
-- [Tez Execution Engine](https://tez.apache.org/)
-- [Google BigQuery Exporting Data](https://cloud.google.com/bigquery/docs/exporting-data)
-- [Hive Metastore with PostgreSQL](https://cwiki.apache.org/confluence/display/Hive/AdminManual+Metastore+Administration)
-
----
 
 
 
@@ -196,6 +82,189 @@ docker run -d --name hive-tez \
   -e POSTGRES_PASSWORD=your_password \
   hive-tez-postgres
 ```
+
+# Hive Configuration Documentation (`hive-site.xml`)
+
+This file configures the behavior of Apache Hive for execution, metadata management, query planning, and integration with the Tez execution engine. Below is a breakdown of key properties defined.
+
+---
+
+## 🧠 Metastore Configuration
+
+```xml
+<property>
+  <name>hive.metastore.local</name>
+  <value>false</value>
+</property>
+```
+- Connects to a remote Hive Metastore (not embedded).
+
+```xml
+<property>
+  <name>javax.jdo.option.ConnectionURL</name>
+  <value>jdbc:postgresql://postgres:5432/metastore</value>
+</property>
+```
+- Connects the Hive Metastore to a PostgreSQL database.
+
+```xml
+<property>
+  <name>javax.jdo.option.ConnectionDriverName</name>
+  <value>org.postgresql.Driver</value>
+</property>
+```
+- Uses the PostgreSQL JDBC driver.
+
+---
+
+## 🔐 Authentication & Authorization
+
+```xml
+<property>
+  <name>hive.security.authorization.enabled</name>
+  <value>false</value>
+</property>
+```
+- Disables Hive's authorization layer for simplicity.
+
+---
+
+## 🗄️ Schema Auto-Creation (Dev Mode)
+
+```xml
+<property>
+  <name>datanucleus.autoCreateSchema</name>
+  <value>true</value>
+</property>
+```
+- Allows Hive to automatically create schema objects in the metastore DB.
+
+---
+
+## 🔗 Metastore URIs
+
+```xml
+<property>
+  <name>hive.metastore.uris</name>
+  <value>thrift://meta-store:9083,thrift://meta-store2:9084</value>
+</property>
+```
+- Lists available Hive Metastore services for high availability.
+
+---
+
+## 🧪 HiveServer2 Configuration
+
+```xml
+<property>
+  <name>hive.server2.thrift.port</name>
+  <value>10000</value>
+</property>
+```
+- Configures the listening port for HiveServer2.
+
+```xml
+<property>
+  <name>hive.server2.thrift.bind.host</name>
+  <value>0.0.0.0</value>
+</property>
+```
+- Binds the HiveServer2 service to all interfaces.
+
+---
+
+## 🚀 Tez Execution Engine
+
+```xml
+<property>
+  <name>hive.execution.engine</name>
+  <value>tez</value>
+</property>
+```
+- Enables Tez as the execution engine instead of MapReduce.
+
+```xml
+<property>
+  <name>tez.lib.uris</name>
+  <value>hdfs:///app/tez.tar.gz</value>
+</property>
+```
+- Points to the Tez libraries archive in HDFS.
+
+```xml
+<property>
+  <name>hive.tez.container.size</name>
+  <value>2048</value>
+</property>
+```
+- Sets the memory allocation per Tez container.
+
+---
+
+## 🔁 Session Management
+
+```xml
+<property>
+  <name>hive.server2.tez.initialize.default.sessions</name>
+  <value>true</value>
+</property>
+```
+- Enables pre-warming of Tez sessions for better performance.
+
+```xml
+<property>
+  <name>hive.server2.tez.session.lifetime</name>
+  <value>3600000</value>
+</property>
+```
+- Sets Tez session lifetime (1 hour).
+
+---
+
+## 💾 ACID & Partitioning
+
+```xml
+<property>
+  <name>hive.support.concurrency</name>
+  <value>true</value>
+</property>
+```
+- Enables transactional (ACID) support.
+
+```xml
+<property>
+  <name>hive.txn.manager</name>
+  <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+</property>
+```
+- Uses the database transaction manager.
+
+```xml
+<property>
+  <name>hive.exec.dynamic.partition</name>
+  <value>true</value>
+</property>
+```
+
+```xml
+<property>
+  <name>hive.exec.dynamic.partition.mode</name>
+  <value>nonstrict</value>
+</property>
+```
+- Allows dynamic partitioning without explicitly defining all partitions.
+
+---
+
+## 📚 Summary
+
+This `hive-site.xml` file prepares Hive for production use with:
+- A remote PostgreSQL metastore.
+- External Tez engine for performance.
+- Session pooling.
+- Partitioning, bucketing, and transactional features for scalability.
+
+
 
 ## 🗃 PostgreSQL Metastore
 
