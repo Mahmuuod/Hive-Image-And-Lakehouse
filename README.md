@@ -779,5 +779,5 @@ Feel free to contribute or suggest improvements via GitHub.
 
 ## 🧑‍💻 Author
 
-- [Your Name](https://github.com/your-github)
-- Contributions welcome! Please open a PR or issue.
+- Mahmoud Osama
+
